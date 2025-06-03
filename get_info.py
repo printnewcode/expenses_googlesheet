@@ -47,6 +47,20 @@ def callback_query(call):
         bot.send_message(user_id, "Введите сумму:")
         bot.register_next_step_handler(call.message, process_amount)
 
+    elif call.data.endswith("other"):
+        msg = bot.send_message(chat_id=call.message.chat.id, text="Введите свое значение")
+        bot.register_next_step_handler(msg, register_other, call.data.split("_")[0])
+
+
+def register_other(message, type_):
+    user_id = message.chat.id
+    info[user_id][f"{type_}"] = message.text
+
+    if type_ == "type":
+        bot.send_message(user_id, "Выберите статью затрат:", reply_markup=create_keyboard_type(subtypes, 1))
+    else:
+        bot.send_message(user_id, "Выберите способ оплаты:", reply_markup=PAYMENT_TYPES)
+
 
 def process_amount(message):
     user_id = message.chat.id
