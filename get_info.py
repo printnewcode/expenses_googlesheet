@@ -122,7 +122,7 @@ def get_message(message):
     try:
         if message.chat.id == config.FORWARD_CHAT_ID:
             data_ = message.text.split("|")
-            data_.append(datetime.now(tzinfo).strftime("%Y-%m-%d"), datetime.now(tzinfo).strftime("%H:%M"))
+            #data_.append(datetime.now(tzinfo).strftime("%Y-%m-%d"), datetime.now(tzinfo).strftime("%H:%M"))
             google_sheets.insert_one(
                 table=table,
                 title=info['names'][0],
