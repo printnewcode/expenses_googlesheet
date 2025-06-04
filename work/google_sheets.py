@@ -21,11 +21,6 @@ spreadsheetId = "1zpBzjVnqLL8gyCP74mXWqTlQNOrbQ-sjs7vL8ulUdH0" # сохраня�
 print('https://docs.google.com/spreadsheets/d/' + spreadsheetId)
 
 driveService = discovery.build('drive', 'v3', http = httpAuth) # Выбираем работу с Google Drive и 3 версию API
-access = driveService.permissions().create(
-    fileId = spreadsheetId,
-    body = {'type': 'user', 'role': 'writer', 'emailAddress': 'artemplotnikov0303@gmail.com'},  # Открываем доступ на редактирование
-    fields = 'id'
-).execute()
 
 def client_init_json() -> Client:
     """Создание клиента для работы с Google Sheets."""
