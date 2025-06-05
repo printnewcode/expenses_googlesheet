@@ -17,7 +17,7 @@ credentials = ServiceAccountCredentials.from_json_keyfile_name(os.path.join(os.p
 httpAuth = credentials.authorize(httplib2.Http()) # Авторизуемся в системе
 service = discovery.build('sheets', 'v4', http = httpAuth) # Выбираем работу с таблицами и 4 версию API 
 
-spreadsheetId = "1zpBzjVnqLL8gyCP74mXWqTlQNOrbQ-sjs7vL8ulUdH0" # сохраняем идентификатор файла
+spreadsheetId = os.getenv("spreadsheetId") # сохраняем идентификатор файла
 print('https://docs.google.com/spreadsheets/d/' + spreadsheetId)
 
 driveService = discovery.build('drive', 'v3', http = httpAuth) # Выбираем работу с Google Drive и 3 версию API
@@ -65,9 +65,7 @@ def insert_one(table: Spreadsheet, title: str, data: list):
     worksheet = table.worksheet(title)
     worksheet.insert_row(data, index=last_filled_row(worksheet)+1)
 
-"""insert_one(table=table,
-               title=worksheet_info['names'][0],
-               data=["Загрузка", "Расходы на доставку", "Безналичные", "2000"])"""
+
 client = client_init_json()
 table = get_table_by_id(client, spreadsheetId)
 info = get_worksheet_info(table)

@@ -14,7 +14,6 @@ from create_keyboard import create_keyboard_type
 timezone_offset = +3.0
 tzinfo = timezone(timedelta(hours=timezone_offset))
 
-
 info = {}
 
 commands = config.BOT_COMMANDS
@@ -193,8 +192,9 @@ def admin_permission(func):
 
     return wrapped
 
-@bot.message_handler(commands=["admin"])
+
 @admin_permission
+@bot.message_handler(commands=["admin"])
 def admin_panel(message):
     """Админ-панель"""
     bot.send_message(chat_id=message.chat.id, text="Выберите, что хотите изменить", reply_markup=ADMIN_BUTTONS)
