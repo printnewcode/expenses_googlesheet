@@ -211,7 +211,7 @@ def register_delete(message, type_):
     if type_ == 0:
         with open('data_types.txt', 'r', encoding="utf-8") as file:
             lines = file.readlines()
-        new_lines = [line.strip() for line in lines if message.text not in line]
+        new_lines = [line.strip() for line in lines if message.text.lower() not in line.lower()]
 
         with open('data_types.txt', 'w', encoding="utf-8") as file:
             for line in new_lines:
@@ -220,7 +220,7 @@ def register_delete(message, type_):
     else:
         with open('data_subtypes.txt', 'r', encoding="utf-8") as file:
             lines = file.readlines()
-        new_lines = [line.strip() for line in lines if message.text not in line]
+        new_lines = [line.strip() for line in lines if message.text.lower() not in line.lower()]
 
         with open('data_subtypes.txt', 'w', encoding="utf-8") as file:
             for line in new_lines:
