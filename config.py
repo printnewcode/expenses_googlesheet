@@ -7,7 +7,7 @@ dotenv.load_dotenv()
 
 BOT_TOKEN = getenv("BOT_TOKEN")
 FORWARD_CHAT_ID = -1002686227914
-spreadsheetId = getenv("spreadsheetId")
+spreadsheetId = "1y1fCRSKsBS_Oz1CXb51C40mDePaxbc0f6IFA1oLZVYQ"
 ADMINS_LIST = [596442939,]
 
 

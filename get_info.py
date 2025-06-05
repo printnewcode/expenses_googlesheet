@@ -1,3 +1,5 @@
+import os
+
 import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 from datetime import datetime, timezone, timedelta
@@ -7,9 +9,12 @@ import config
 from keyboards import START_BUTTON, PAYMENT_TYPES, ADMIN_BUTTONS
 from static.types import types, subtypes
 from work import google_sheets
-from work.google_sheets import main, client_init_json, get_table_by_id, get_worksheet_info
 from create_keyboard import create_keyboard_type
-
+import httplib2
+from googleapiclient import discovery
+from oauth2client.service_account import ServiceAccountCredentials
+from gspread import Client, Spreadsheet, Worksheet, service_account
+from oauth2client.service_account import ServiceAccountCredentials
 
 timezone_offset = +3.0
 tzinfo = timezone(timedelta(hours=timezone_offset))
@@ -25,6 +30,63 @@ bot = telebot.TeleBot(
 )
 
 bot.set_my_commands(commands)
+
+# Устанавливаем доступ к Google Таблицам
+credentials = ServiceAccountCredentials.from_json_keyfile_name(os.path.join(os.path.dirname(__file__), "static", "google_cred.json"), ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive'])
+
+httpAuth = credentials.authorize(httplib2.Http()) # Авторизуемся в системе
+service = discovery.build('sheets', 'v4', http = httpAuth) # Выбираем работу с таблицами и 4 версию API 
+
+print('https://docs.google.com/spreadsheets/d/' + config.spreadsheetId)
+
+driveService = discovery.build('drive', 'v3', http = httpAuth) # Выбираем работу с Google Drive и 3 версию API
+
+def client_init_json() -> Client:
+    """Создание клиента для работы с Google Sheets."""
+    return service_account(filename=os.path.join(os.path.dirname(__file__), "static", "google_cred.json"))
+
+def get_table_by_id(client: Client, table_url):
+    """Получение таблицы из Google Sheets по ID таблицы."""
+    
+    return client.open_by_key(table_url)
+    """except:
+        spreadsheet = service.spreadsheets().create(body = {
+    'properties': {'title': 'Затраты', 'locale': 'ru_RU'},
+    'sheets': [{'properties': {'sheetType': 'GRID',
+                               'sheetId': 0,
+                               'title': 'Лист 1',
+                               'gridProperties': {'rowCount': 100, 'columnCount': 15}}}]
+}).execute()
+        access = driveService.permissions().create(
+    fileId = spreadsheetId,
+    body = {'type': 'user', 'role': 'writer', 'emailAddress': 'artemplotnikov0303@gmail.com'},  # Открываем доступ на редактирование
+    fields = 'id'
+).execute()
+        return client.open_by_key(spreadsheet.id)"""
+
+def get_worksheet_info(table: Spreadsheet) -> dict:
+    """Возвращает количество листов в таблице и их названия."""
+    worksheets = table.worksheets()
+    worksheet_info = {
+        "count": len(worksheets),
+        "names": [worksheet.title for worksheet in worksheets]
+    }
+    return worksheet_info
+
+def last_filled_row(worksheet):
+    str_list = list(filter(None, worksheet.col_values(1)))
+    return len(str_list)
+
+def insert_one(table: Spreadsheet, title: str, data: list):
+    """Вставка данных в лист."""
+    worksheet = table.worksheet(title)
+    worksheet.insert_row(data, index=last_filled_row(worksheet)+1)
+
+
+client = client_init_json()
+table = get_table_by_id(client, config.spreadsheetId)
+info = get_worksheet_info(table)
+
 
 """Admin"""
 
@@ -144,28 +206,6 @@ try:
 except Exception as e:
     print(f"Ошибка при удалении вебхука: {e}")
 
-@bot.message_handler(func=lambda message: True)
-def get_message(message):
-    try:
-        if message.chat.id == config.FORWARD_CHAT_ID:
-            data_ = message.text.split("|")
-            data_.append(datetime.now(tzinfo).strftime("%Y-%m-%d"), datetime.now(tzinfo).strftime("%H:%M"))
-            google_sheets.insert_one(
-                table=table,
-                title=info['names'][0],
-                data=data_
-            )
-            print("Данные добавлены!")
-        elif message.text == "/start":
-            try:
-                del info[message.chat.id]
-                bot.clear_step_handler_by_chat_id(message.chat.id)
-                start(message)
-            except:
-                pass
-    except Exception as e:
-        print(e)
-
 
 def register_delete(message, type_):
     if type_ == 0:
@@ -190,19 +230,35 @@ def register_delete(message, type_):
 
 def register_add(message, type_):
     if type_ == 0:
-        with open('data_types.txt', 'w', encoding="utf-8") as file:
-            file.write(message.text + '\n')
+        with open('data_types.txt', 'a', encoding="utf-8") as file:
+            file.write('\n' + message.text + '\n')
     else:
-        with open('data_subtypes.txt', 'w', encoding="utf-8") as file:
-            file.write(message.text + '\n')
+        with open('data_subtypes.txt', 'a', encoding="utf-8") as file:
+            file.write('\n' + message.text + '\n')
     bot.send_message(chat_id=message.chat.id, text="Наименование успешно добавлено!")
 
-
-client = client_init_json()
-table = get_table_by_id(client, config.spreadsheetId)
-info = get_worksheet_info(table)
-
-
+@bot.message_handler(func=lambda message: True)
+def get_message(message):
+    try:
+        if message.chat.id == config.FORWARD_CHAT_ID:
+            data_ = message.text.split("|")
+            data_.append(datetime.now(tzinfo).strftime("%Y-%m-%d"))
+            data_.append(datetime.now(tzinfo).strftime("%H:%M"))
+            insert_one(
+                table=table,
+                title=info['names'][0],
+                data=data_
+            )
+            print("Данные добавлены!")
+        elif message.text == "/start":
+            try:
+                del info[message.chat.id]
+                bot.clear_step_handler_by_chat_id(message.chat.id)
+                start(message)
+            except:
+                pass
+    except Exception as e:
+        print(e)
 
 
 bot.polling(none_stop=True)
