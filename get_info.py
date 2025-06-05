@@ -26,6 +26,34 @@ bot = telebot.TeleBot(
 
 bot.set_my_commands(commands)
 
+"""Admin"""
+
+def admin_permission(func):
+    """
+    Checking user for admin permission to access the function.
+    """
+
+    @wraps(func)
+    def wrapped(message) -> None:
+        user_id = message.from_user.id
+        if not user_id in config.ADMINS_LIST:
+            bot.send_message(user_id, "У вас нет доступа к админ-панели")
+            return
+        return func(message)
+
+    return wrapped
+
+
+@admin_permission
+@bot.message_handler(commands=["admin"])
+def admin_panel(message):
+    """Админ-панель"""
+    bot.send_message(chat_id=message.chat.id, text="Выберите, что хотите изменить", reply_markup=ADMIN_BUTTONS)
+
+
+"""User"""
+
+
 @bot.message_handler(commands=['start'])
 def start(message):
     bot.send_message(chat_id=message.chat.id, text="Добро пожаловать!\n\nДля добавления нового расхода нажмите кнопку ниже", reply_markup=START_BUTTON)
@@ -121,7 +149,7 @@ def get_message(message):
     try:
         if message.chat.id == config.FORWARD_CHAT_ID:
             data_ = message.text.split("|")
-            #data_.append(datetime.now(tzinfo).strftime("%Y-%m-%d"), datetime.now(tzinfo).strftime("%H:%M"))
+            data_.append(datetime.now(tzinfo).strftime("%Y-%m-%d"), datetime.now(tzinfo).strftime("%H:%M"))
             google_sheets.insert_one(
                 table=table,
                 title=info['names'][0],
@@ -175,29 +203,6 @@ table = get_table_by_id(client, config.spreadsheetId)
 info = get_worksheet_info(table)
 
 
-"""Admin"""
-
-def admin_permission(func):
-    """
-    Checking user for admin permission to access the function.
-    """
-
-    @wraps(func)
-    def wrapped(message) -> None:
-        user_id = message.from_user.id
-        if not user_id in config.ADMINS_LIST:
-            bot.send_message(user_id, "У вас нет доступа к админ-панели")
-            return
-        return func(message)
-
-    return wrapped
-
-
-@admin_permission
-@bot.message_handler(commands=["admin"])
-def admin_panel(message):
-    """Админ-панель"""
-    bot.send_message(chat_id=message.chat.id, text="Выберите, что хотите изменить", reply_markup=ADMIN_BUTTONS)
 
 
 bot.polling(none_stop=True)
