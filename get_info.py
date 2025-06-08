@@ -192,11 +192,24 @@ def process_amount(message):
     user_id = message.chat.id
     info[user_id]['amount'] = message.text
 
+    process_fio(message)
+    
+
+
+def process_fio(message):
+    msg = bot.send_message(chat_id=message.chat.id, text="Отправьте свое ФИО")
+    bot.register_next_step_handler(msg, register_fio)
+
+
+def register_fio(message):
+    info[message.chat.id]['fio'] = message.text
+
+    user_id = message.chat.id
     # Формируем сообщение для переадресации
-    result_message = f"{info[user_id]['type']} | {info[user_id]['subtype']} | {info[user_id]['payment']} | {info[user_id]['amount']}"
+    result_message = f"{info[user_id]['fio']} | {info[user_id]['type']} | {info[user_id]['subtype']} | {info[user_id]['payment']} | {info[user_id]['amount']}"
     
-    
-    bot.send_message(config.FORWARD_CHAT_ID, result_message)
+    sended_message = bot.send_message(config.FORWARD_CHAT_ID, result_message)
+    get_message(sended_message)
     bot.send_message(user_id, "Данные отправлены!")
     # Очищаем данные после отправки (опционально)
     del info[user_id]
@@ -206,6 +219,20 @@ try:
 except Exception as e:
     print(f"Ошибка при удалении вебхука: {e}")
 
+def get_message(message):
+    try:
+        if message.chat.id == config.FORWARD_CHAT_ID:
+            data_ = message.text.split("|")
+            data_.append(datetime.now(tzinfo).strftime("%Y-%m-%d"))
+            data_.append(datetime.now(tzinfo).strftime("%H:%M"))
+            insert_one(
+                table=table,
+                title=info['names'][0],
+                data=data_
+            )
+            print("Данные добавлены!")
+    except:
+        pass
 
 def register_delete(message, type_):
     if type_ == 0:
