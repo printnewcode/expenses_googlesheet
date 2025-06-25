@@ -18,8 +18,5 @@ def create_keyboard_type(list_: list, type_: int = 0) -> list:
         button = InlineKeyboardButton(item, callback_data=f"{prefix}_{list_.index(item)}")
         keyboard_types.add(button)
 
-        # Добавляем новую строку после каждых трех кнопок
-        if (index + 1) % 3 == 0:
-            keyboard_types.add(InlineKeyboardButton(" ", callback_data="dummy"))  # Пустая кнопка для новой строки
     keyboard_types.add(InlineKeyboardButton(text="Другое", callback_data=f"{prefix}_other"))
     return keyboard_types
